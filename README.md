@@ -1,11 +1,5 @@
 # Dimraeth Nucleus Co-op Handler
 
-<p align="center">
-  <a href="https://store.steampowered.com/app/2402680/Dimraeth/">
-    <img src="https://images.igdb.com/igdb/image/upload/t_cover_big/cocwem.jpg" alt="Dimraeth cover" />
-  </a>
-</p>
-
 Community beta handler for running multiple local instances of [Dimraeth](https://store.steampowered.com/app/2402680/Dimraeth/) through [Nucleus Co-op](https://nucleus-coop.github.io/).
 
 ## Status
