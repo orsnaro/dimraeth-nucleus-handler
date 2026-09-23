@@ -36,14 +36,23 @@ const ProtoInput = {
 };
 const Game = { Hook: {}, ProtoInput: {} };
 const patchCalls = [];
+const registryWrites = [];
 const Context = {
+  Width: 2560,
+  Height: 720,
+  PosX: 0,
+  PosY: 720,
   GetFolder: (folder) => {
     assert.equal(folder, "InstancedGameFolder");
     return "instance";
   },
   PatchFileFindPattern: (...args) => patchCalls.push(args),
+  EditRegKey: (...args) => registryWrites.push(args),
 };
-const Nucleus = { Folder: { InstancedGameFolder: "InstancedGameFolder" } };
+const Nucleus = {
+  Folder: { InstancedGameFolder: "InstancedGameFolder" },
+  RegType: { DWord: "DWord" },
+};
 const PlayerList = {
   Count: 2,
   0: { IsXInput: false, ProtoInputInstanceHandle: 7 },
@@ -73,15 +82,52 @@ assert.ok(patchTokens.every((token) => token === "00"), "WGI replacement must be
 assert.equal(patchAll, true, "Nucleus patch API must use the established final flag");
 assert.equal(
   Context.StartArguments,
-  " -screen-fullscreen 0 -popupwindow -screen-width 1280 -screen-height 720 -screen-quality Fastest",
-  "WGI patch must preserve launch arguments",
+  " -screen-fullscreen 0 -popupwindow -screen-width 2560 -screen-height 720 -screen-quality Fastest",
+  "launch resolution must match the assigned split-screen bounds",
 );
+
+// Reports whether Game.Play wrote one expected Unity display setting.
+const hasRegistryWrite = (name, value) =>
+  registryWrites.some(
+    ([root, keyPath, valueName, data, type]) =>
+      root === "HKEY_CURRENT_USER" &&
+      keyPath === "SOFTWARE\\Mudtek\\Dimraeth" &&
+      valueName === name &&
+      data === value &&
+      type === "DWord",
+  );
+
+assert.ok(hasRegistryWrite("Screenmanager Fullscreen mode_h3630240806", 3));
+assert.ok(hasRegistryWrite("Screenmanager Resolution Use Native_h1405027254", 0));
+assert.ok(hasRegistryWrite("Screenmanager Resolution Width_h182942802", 2560));
+assert.ok(hasRegistryWrite("Screenmanager Resolution Height_h2627697771", 720));
+assert.ok(hasRegistryWrite("Screenmanager Window Position X_h4088080503", 0));
+assert.ok(hasRegistryWrite("Screenmanager Window Position Y_h4088080502", 720));
+
+// Nucleus calls Game.Play before each serialized launch with that player's bounds.
+registryWrites.length = 0;
+Context.Width = 1280;
+Context.Height = 1440;
+Context.PosX = 1280;
+Context.PosY = 0;
+Game.Play();
+assert.equal(
+  Context.StartArguments,
+  " -screen-fullscreen 0 -popupwindow -screen-width 1280 -screen-height 1440 -screen-quality Fastest",
+  "each instance must receive its own split-screen bounds",
+);
+assert.ok(hasRegistryWrite("Screenmanager Resolution Width_h182942802", 1280));
+assert.ok(hasRegistryWrite("Screenmanager Resolution Height_h2627697771", 1440));
+assert.ok(hasRegistryWrite("Screenmanager Window Position X_h4088080503", 1280));
+assert.ok(hasRegistryWrite("Screenmanager Window Position Y_h4088080502", 0));
 
 assert.equal(Game.MaxPlayers, 4, "handler must allow four total players");
 assert.equal(Game.MaxPlayersOneMonitor, 2, "handler must keep two players per monitor");
 assert.equal(Game.ProtoInput.XinputHook, true, "ProtoInput must isolate XInput controllers");
 assert.equal(Game.ProtoInput.UseOpenXinput, true, "OpenXInput must expose x360ce slots");
 assert.equal(Game.ProtoInput.MultipleProtoControllers, undefined);
+assert.equal(Game.ProtoInput.SetWindowPosHook, true, "handler must block game window reposition/resize");
+assert.equal(Game.ProtoInput.MoveWindowHook, true, "handler must block game MoveWindow reposition/resize");
 assert.equal(
   Game.ProtoInput.InjectRuntime_RemoteLoadMethod,
   true,

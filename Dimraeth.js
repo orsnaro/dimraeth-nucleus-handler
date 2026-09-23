@@ -26,7 +26,7 @@ Game.PromptBetweenInstances = true;
 Game.PauseBetweenProcessGrab = 15;
 Game.PauseBetweenStarts = 45;
 Game.Description =
-  "Up to four players using controllers, keyboard/mouse pairs, or a mix, with at most two players per monitor. Keep x360ce running for DirectInput controllers. Nucleus patches only temporary UnityPlayer.dll copies to isolate controllers. Wait until each window is responsive before continuing. Press END to lock keyboard/mouse input; press END again before CTRL+Q.";
+  "Up to four players using controllers, keyboard/mouse pairs, or a mix, with at most two players per monitor. For single-monitor splits turn Fullscreen OFF in each video settings menu, then press Ctrl+R so Nucleus placement holds. Keep x360ce running for DirectInput controllers. Nucleus patches only temporary UnityPlayer.dll copies to isolate controllers. Two instances can commit 10-16 GB combined, so restart first, close heavy background apps, and keep the pagefile system-managed. Wait until each window is responsive before continuing. Press END to lock keyboard/mouse input; press END again before CTRL+Q.";
 
 // Legacy input settings stay disabled because ProtoInput owns isolation.
 Game.HookSetCursorPos = false;
@@ -68,6 +68,10 @@ Game.ProtoInput.MessageFilterHook = true;
 Game.ProtoInput.ClipCursorHook = true;
 Game.ProtoInput.FocusHooks = true;
 Game.ProtoInput.ClipCursorHookCreatesFakeClip = true;
+
+// Keep Nucleus split placement: block game-driven resize/reposition.
+Game.ProtoInput.SetWindowPosHook = true;
+Game.ProtoInput.MoveWindowHook = true;
 
 // Installed on input lock (Vellum pattern): cursor, keyboard state, visibility.
 Game.ProtoInput.GetCursorPosHook = false;
@@ -162,7 +166,7 @@ Game.ProtoInput.OnInputUnlocked = function() {
   }
 };
 
-// Forces low memory-test resolution and quality until clicks and OOM are resolved.
+// Patches WGI and launches each instance inside its assigned Nucleus region.
 Game.Play = function() {
   var dllPath = Context.GetFolder(Nucleus.Folder.InstancedGameFolder) + "\\UnityPlayer.dll";
   var searchPattern =
@@ -171,5 +175,18 @@ Game.Play = function() {
     "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00";
   Context.PatchFileFindPattern(dllPath, dllPath, searchPattern, patchPattern, true);
   Context.StartArguments =
-    " -screen-fullscreen 0 -popupwindow -screen-width 1280 -screen-height 720 -screen-quality Fastest";
+    " -screen-fullscreen 0 -popupwindow -screen-width " +
+    Context.Width +
+    " -screen-height " +
+    Context.Height +
+    " -screen-quality Fastest";
+
+  // Prevent Unity's saved fullscreen state from overriding Nucleus placement.
+  var registryPath = "SOFTWARE\\Mudtek\\Dimraeth";
+  Context.EditRegKey("HKEY_CURRENT_USER", registryPath, "Screenmanager Fullscreen mode_h3630240806", 3, Nucleus.RegType.DWord);
+  Context.EditRegKey("HKEY_CURRENT_USER", registryPath, "Screenmanager Resolution Use Native_h1405027254", 0, Nucleus.RegType.DWord);
+  Context.EditRegKey("HKEY_CURRENT_USER", registryPath, "Screenmanager Resolution Width_h182942802", Context.Width, Nucleus.RegType.DWord);
+  Context.EditRegKey("HKEY_CURRENT_USER", registryPath, "Screenmanager Resolution Height_h2627697771", Context.Height, Nucleus.RegType.DWord);
+  Context.EditRegKey("HKEY_CURRENT_USER", registryPath, "Screenmanager Window Position X_h4088080503", Context.PosX, Nucleus.RegType.DWord);
+  Context.EditRegKey("HKEY_CURRENT_USER", registryPath, "Screenmanager Window Position Y_h4088080502", Context.PosY, Nucleus.RegType.DWord);
 };

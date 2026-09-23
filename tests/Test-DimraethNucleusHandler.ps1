@@ -58,10 +58,19 @@ foreach ($expected in @(
     'SetRawInputBypass',
     'SetDrawFakeCursor',
     'Game.ProtoInput.ExtendFakeCursorBounds = true;',
+    'Game.ProtoInput.SetWindowPosHook = true;',
+    'Game.ProtoInput.MoveWindowHook = true;',
     'Game.LockInputToggleKey = 0x23;',
     '-screen-fullscreen 0 -popupwindow',
-    '-screen-width 1280',
-    '-screen-height 720',
+    '-screen-width " +',
+    '" -screen-height " +',
+    'var registryPath = "SOFTWARE\\Mudtek\\Dimraeth";',
+    'Screenmanager Fullscreen mode_h3630240806',
+    'Screenmanager Resolution Use Native_h1405027254',
+    'Screenmanager Resolution Width_h182942802',
+    'Screenmanager Resolution Height_h2627697771',
+    'Screenmanager Window Position X_h4088080503',
+    'Screenmanager Window Position Y_h4088080502',
     '-screen-quality Fastest'
 )) {
     Assert-Contains -Content $content -Expected $expected
@@ -70,8 +79,7 @@ foreach ($expected in @(
 foreach ($forbidden in @(
     'Game.ProtoInput.MultipleProtoControllers',
     'Game.KillMutex',
-    'Context.PatchFile(',
-    'Context.EditRegKey'
+    'Context.PatchFile('
 )) {
     Assert-Excludes -Content $content -Forbidden $forbidden
 }
