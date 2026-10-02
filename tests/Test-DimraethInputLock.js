@@ -123,6 +123,13 @@ assert.ok(hasRegistryWrite("Screenmanager Window Position Y_h4088080502", 0));
 
 assert.equal(Game.MaxPlayers, 4, "handler must allow four total players");
 assert.equal(Game.MaxPlayersOneMonitor, 2, "handler must keep two players per monitor");
+assert.equal(Game.SteamID, "2402680", "handler must tag the real Dimraeth Steam ID");
+assert.equal(Game.UseGoldberg, true, "handler must give each instance its own Steam identity");
+assert.ok(
+  Game.FileSymlinkExclusions.includes("steam_api64.dll") &&
+    Game.FileSymlinkExclusions.includes("steam_appid.txt"),
+  "steam emu files must not be shared between instances",
+);
 assert.equal(Game.ProtoInput.XinputHook, true, "ProtoInput must isolate XInput controllers");
 assert.equal(Game.ProtoInput.UseOpenXinput, true, "OpenXInput must expose x360ce slots");
 assert.equal(Game.ProtoInput.MultipleProtoControllers, undefined);

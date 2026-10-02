@@ -5,6 +5,13 @@ Game.SymlinkExe = false;
 Game.SymlinkGame = true;
 Game.SymlinkFolders = true;
 Game.FileSymlinkCopyInstead = ["UnityPlayer.dll"];
+// Per-instance Steam network identity: Steam P2P routes by CSteamID, not IP,
+// so shared emu files = duplicate ID = only one instance joins / both kicked.
+Game.SteamID = "2402680";
+Game.UseGoldberg = true;
+Game.CreateSteamAppIdByExe = true;
+Game.FileSymlinkExclusions = ["steam_api64.dll", "steam_appid.txt", "OnlineFix.ini", "OnlineFix64.dll"];
+Game.DirSymlinkExclusions = ["Dimraeth_Data\\Plugins\\x86_64"];
 Game.ExecutableName = "Dimraeth.exe";
 Game.GUID = "Dimraeth";
 Game.MaxPlayers = 4;
@@ -26,7 +33,7 @@ Game.PromptBetweenInstances = true;
 Game.PauseBetweenProcessGrab = 15;
 Game.PauseBetweenStarts = 45;
 Game.Description =
-  "Up to four players using controllers, keyboard/mouse pairs, or a mix, with at most two players per monitor. For single-monitor splits turn Fullscreen OFF in each video settings menu, then press Ctrl+R so Nucleus placement holds. Keep x360ce running for DirectInput controllers. Nucleus patches only temporary UnityPlayer.dll copies to isolate controllers. Two instances can commit 10-16 GB combined, so restart first, close heavy background apps, and keep the pagefile system-managed. Wait until each window is responsive before continuing. Press END to lock keyboard/mouse input; press END again before CTRL+Q.";
+  "Up to four players using controllers, keyboard/mouse pairs, or a mix, with at most two players per monitor. For single-monitor splits turn Fullscreen OFF in each video settings menu, then press Ctrl+R so Nucleus placement holds. Keep x360ce running for DirectInput controllers. Nucleus patches only temporary UnityPlayer.dll copies to isolate controllers. Two instances can commit 10-16 GB combined, so restart first, close heavy background apps, and keep the pagefile system-managed. Wait until each window is responsive before continuing. Press END to lock keyboard/mouse input; press END again before CTRL+Q. Online: keep all instances on the same subnet with Network Discovery on, give each instance a distinct Player Steam ID (Players tab), and let Player 1 host before others join.";
 
 // Legacy input settings stay disabled because ProtoInput owns isolation.
 Game.HookSetCursorPos = false;
