@@ -42,6 +42,7 @@ const Context = {
   Height: 720,
   PosX: 0,
   PosY: 720,
+  OrigRootFolder: "origin",
   GetFolder: (folder) => {
     assert.equal(folder, "InstancedGameFolder");
     return "instance";
@@ -59,7 +60,11 @@ const PlayerList = {
   1: { IsXInput: true, ProtoInputInstanceHandle: 8 },
 };
 
-vm.runInNewContext(handlerSource, { Context, Game, Nucleus, PlayerList, ProtoInput });
+// Flips to true to simulate an OFME/OnlineFix source build.
+let onlineFixPresent = false;
+const System = { IO: { File: { Exists: () => onlineFixPresent } } };
+
+vm.runInNewContext(handlerSource, { Context, Game, Nucleus, PlayerList, ProtoInput, System });
 Game.Play();
 assert.ok(
   Game.FileSymlinkCopyInstead.includes("UnityPlayer.dll"),
@@ -123,8 +128,15 @@ assert.ok(hasRegistryWrite("Screenmanager Window Position Y_h4088080502", 0));
 
 assert.equal(Game.MaxPlayers, 4, "handler must allow four total players");
 assert.equal(Game.MaxPlayersOneMonitor, 2, "handler must keep two players per monitor");
+// Clean Steam build: per-instance Steam split stays on.
+assert.equal(Game.UseGoldberg, true, "clean builds must keep per-instance Steam separation");
+assert.equal(Game.CreateSteamAppIdByExe, true, "clean builds must get a per-instance steam_appid");
+// OFME/OnlineFix build: its bundled emulator fights Goldberg, so split turns off.
+onlineFixPresent = true;
+Game.Play();
+assert.equal(Game.UseGoldberg, false, "OnlineFix builds must not mix two Steam emulators");
+assert.equal(Game.CreateSteamAppIdByExe, false, "OnlineFix builds must keep their own steam_appid");
 assert.equal(Game.SteamID, "2402680", "handler must tag the real Dimraeth Steam ID");
-assert.equal(Game.UseGoldberg, true, "handler must give each instance its own Steam identity");
 assert.ok(
   Game.FileSymlinkExclusions.includes("steam_api64.dll") &&
     Game.FileSymlinkExclusions.includes("steam_appid.txt"),

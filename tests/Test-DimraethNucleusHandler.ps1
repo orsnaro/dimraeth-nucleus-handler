@@ -51,6 +51,8 @@ foreach ($expected in @(
     'Game.CreateSteamAppIdByExe = true;',
     'Game.FileSymlinkExclusions = ["steam_api64.dll", "steam_appid.txt", "OnlineFix.ini", "OnlineFix64.dll"];',
     'Game.DirSymlinkExclusions = ["Dimraeth_Data\\Plugins\\x86_64"];',
+    'Context.OrigRootFolder + "\\OnlineFix64.dll"',
+    'Game.UseGoldberg = false;',
     'Game.UserProfileSavePath = "AppData\\LocalLow\\Mudtek";',
     'Game.SupportsMultipleKeyboardsAndMice = true;',
     'Game.ProtoInput.InjectRuntime_RemoteLoadMethod = true;',

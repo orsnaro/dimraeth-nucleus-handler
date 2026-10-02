@@ -33,7 +33,7 @@ Game.PromptBetweenInstances = true;
 Game.PauseBetweenProcessGrab = 15;
 Game.PauseBetweenStarts = 45;
 Game.Description =
-  "Up to four players using controllers, keyboard/mouse pairs, or a mix, with at most two players per monitor. For single-monitor splits turn Fullscreen OFF in each video settings menu, then press Ctrl+R so Nucleus placement holds. Keep x360ce running for DirectInput controllers. Nucleus patches only temporary UnityPlayer.dll copies to isolate controllers. Two instances can commit 10-16 GB combined, so restart first, close heavy background apps, and keep the pagefile system-managed. Wait until each window is responsive before continuing. Press END to lock keyboard/mouse input; press END again before CTRL+Q. Online: keep all instances on the same subnet with Network Discovery on, give each instance a distinct Player Steam ID (Players tab), and let Player 1 host before others join.";
+  "Up to four players using controllers, keyboard/mouse pairs, or a mix, with at most two players per monitor. For single-monitor splits turn Fullscreen OFF in each video settings menu, then press Ctrl+R so Nucleus placement holds. Keep x360ce running for DirectInput controllers. Nucleus patches only temporary UnityPlayer.dll copies to isolate controllers. Two instances can commit 10-16 GB combined, so restart first, close heavy background apps, and keep the pagefile system-managed. Wait until each window is responsive before continuing. Press END to lock keyboard/mouse input; press END again before CTRL+Q. Online: needs a clean Steam build plus distinct Player Steam IDs (Players tab), same subnet with Network Discovery on, and Player 1 hosting before others join. OnlineFix/OFME builds stay local-only: their bundled emulator conflicts with per-instance Steam separation.";
 
 // Legacy input settings stay disabled because ProtoInput owns isolation.
 Game.HookSetCursorPos = false;
@@ -175,6 +175,13 @@ Game.ProtoInput.OnInputUnlocked = function() {
 
 // Patches WGI and launches each instance inside its assigned Nucleus region.
 Game.Play = function() {
+  // OFME/OnlineFix builds ship their own emulator: Goldberg plus a rewritten
+  // steam_appid fight it (failed to load OnlineFix64.dll). Stay local-only on
+  // those; the per-instance Steam split needs a clean Steam build.
+  if (System.IO.File.Exists(Context.OrigRootFolder + "\\OnlineFix64.dll")) {
+    Game.UseGoldberg = false;
+    Game.CreateSteamAppIdByExe = false;
+  }
   var dllPath = Context.GetFolder(Nucleus.Folder.InstancedGameFolder) + "\\UnityPlayer.dll";
   var searchPattern =
     "57 00 69 00 6E 00 64 00 6F 00 77 00 73 00 2E 00 47 00 61 00 6D 00 69 00 6E 00 67 00 2E 00 49 00 6E 00 70 00 75 00 74 00 2E 00 47 00 61 00 6D 00 65 00 70 00 61 00 64";
