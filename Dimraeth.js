@@ -4,7 +4,7 @@ Game.HandlerInterval = 100;
 Game.SymlinkExe = false;
 Game.SymlinkGame = true;
 Game.SymlinkFolders = true;
-Game.FileSymlinkCopyInstead = ["UnityPlayer.dll", "BepInEx\\config\\com.humangenome.waygate.host.cfg"];
+Game.FileSymlinkCopyInstead = ["UnityPlayer.dll"];
 // Steam P2P routes by CSteamID, not IP: two instances sharing one emulated ID
 // means only one joins / both kicked. Flags default OFF so OFME/OnlineFix
 // builds launch exactly as before; Game.Play enables the split on clean builds.
@@ -185,13 +185,15 @@ Game.Play = function() {
     Game.CreateSteamAppIdByExe = false;
   }
 
-  // Per-instance Waygate hero (config is a per-instance copy, see
-  // FileSymlinkCopyInstead): the server seats by character name, so a shared
-  // PlayerCharacter gets the second join refused. Each instance reads its
-  // isolated saves and takes the PlayerID-th hero alphabetically, falling back
-  // to the shared value when fewer heroes exist than players.
+  // Per-instance Waygate hero: the server seats by character name, so a shared
+  // PlayerCharacter gets the second join refused. The config is symlinked and
+  // shared, so each instance first replaces its link with a real copy, then
+  // takes the PlayerID-th hero alphabetically from its isolated saves (falls
+  // back to the shared value when fewer heroes exist than players).
+  var waygateOrigin = Context.OrigRootFolder + "\\BepInEx\\config\\com.humangenome.waygate.host.cfg";
   var waygateCfg = Context.GetFolder(Nucleus.Folder.InstancedGameFolder) + "\\BepInEx\\config\\com.humangenome.waygate.host.cfg";
-  if (System.IO.File.Exists(waygateCfg)) {
+  if (System.IO.File.Exists(waygateOrigin)) {
+    System.IO.File.Copy(waygateOrigin, waygateCfg, true);
     var waygateLines = [];
     waygateLines.push(Context.FindLineNumberInTextFile(waygateCfg, "AutoConnect =", Nucleus.SearchType.StartsWith) + "|AutoConnect = true");
     var heroesRoot = Context.NucleusUserRoot + "\\AppData\\LocalLow\\Mudtek\\Dimraeth\\Characters";

@@ -38,6 +38,7 @@ const Game = { Hook: {}, ProtoInput: {} };
 const patchCalls = [];
 const registryWrites = [];
 const replaceCalls = [];
+const copyCalls = [];
 const Context = {
   Width: 2560,
   Height: 720,
@@ -76,6 +77,7 @@ const System = {
   IO: {
     File: {
       Exists: (p) => (p.indexOf("OnlineFix64.dll") !== -1 ? onlineFixPresent : waygateCfgPresent),
+      Copy: (...args) => copyCalls.push(args),
     },
     Directory: {
       Exists: () => heroesDirPresent,
@@ -169,6 +171,14 @@ heroFiles = [
 Context.PlayerID = 0;
 Game.Play();
 let heroWrites = replaceCalls[replaceCalls.length - 1][1];
+assert.ok(
+  copyCalls.some(
+    ([src, dest]) =>
+      src === "origin\\BepInEx\\config\\com.humangenome.waygate.host.cfg" &&
+      dest === "instance\\BepInEx\\config\\com.humangenome.waygate.host.cfg",
+  ),
+  "each instance must replace its shared config link with a real copy",
+);
 assert.ok(
   heroWrites.some((line) => line === "24|AutoConnect = true"),
   "every instance must re-arm AutoConnect (the mod consumes it once)",
