@@ -47,6 +47,7 @@ foreach ($expected in @(
     'if (player.IsXInput) {',
     'Game.SymlinkGame = true;',
     'Game.SteamID = "2402680";',
+    'Game.ForceFinishOnPlay = false;',
     'Game.UseGoldberg = false;',
     'Game.CreateSteamAppIdByExe = false;',
     'Context.OrigRootFolder + "\\OnlineFix64.dll"',

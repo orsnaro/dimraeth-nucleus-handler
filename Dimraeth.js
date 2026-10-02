@@ -31,6 +31,9 @@ Game.BlockRawInput = false;
 Game.PromptBetweenInstances = true;
 Game.PauseBetweenProcessGrab = 15;
 Game.PauseBetweenStarts = 45;
+// Never kill running game processes on session start: a Waygate dedicated
+// server is the same Dimraeth.exe and must survive instance launches.
+Game.ForceFinishOnPlay = false;
 Game.Description =
   "Up to four players using controllers, keyboard/mouse pairs, or a mix, with at most two players per monitor. For single-monitor splits turn Fullscreen OFF in each video settings menu, then press Ctrl+R so Nucleus placement holds. Keep x360ce running for DirectInput controllers. Nucleus patches only temporary UnityPlayer.dll copies to isolate controllers. Two instances can commit 10-16 GB combined, so restart first, close heavy background apps, and keep the pagefile system-managed. Wait until each window is responsive before continuing. Press END to lock keyboard/mouse input; press END again before CTRL+Q. Online: needs a clean Steam build plus distinct Player Steam IDs (Players tab), same subnet with Network Discovery on, and Player 1 hosting before others join. OnlineFix/OFME builds stay local-only: their bundled emulator conflicts with per-instance Steam separation.";
 
