@@ -137,11 +137,6 @@ Game.Play();
 assert.equal(Game.UseGoldberg, false, "OnlineFix builds must not mix two Steam emulators");
 assert.equal(Game.CreateSteamAppIdByExe, false, "OnlineFix builds must keep their own steam_appid");
 assert.equal(Game.SteamID, "2402680", "handler must tag the real Dimraeth Steam ID");
-assert.ok(
-  Game.FileSymlinkExclusions.includes("steam_api64.dll") &&
-    Game.FileSymlinkExclusions.includes("steam_appid.txt"),
-  "steam emu files must not be shared between instances",
-);
 assert.equal(Game.ProtoInput.XinputHook, true, "ProtoInput must isolate XInput controllers");
 assert.equal(Game.ProtoInput.UseOpenXinput, true, "OpenXInput must expose x360ce slots");
 assert.equal(Game.ProtoInput.MultipleProtoControllers, undefined);

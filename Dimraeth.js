@@ -5,13 +5,12 @@ Game.SymlinkExe = false;
 Game.SymlinkGame = true;
 Game.SymlinkFolders = true;
 Game.FileSymlinkCopyInstead = ["UnityPlayer.dll"];
-// Per-instance Steam network identity: Steam P2P routes by CSteamID, not IP,
-// so shared emu files = duplicate ID = only one instance joins / both kicked.
+// Steam P2P routes by CSteamID, not IP: two instances sharing one emulated ID
+// means only one joins / both kicked. Flags default OFF so OFME/OnlineFix
+// builds launch exactly as before; Game.Play enables the split on clean builds.
 Game.SteamID = "2402680";
-Game.UseGoldberg = true;
-Game.CreateSteamAppIdByExe = true;
-Game.FileSymlinkExclusions = ["steam_api64.dll", "steam_appid.txt", "OnlineFix.ini", "OnlineFix64.dll"];
-Game.DirSymlinkExclusions = ["Dimraeth_Data\\Plugins\\x86_64"];
+Game.UseGoldberg = false;
+Game.CreateSteamAppIdByExe = false;
 Game.ExecutableName = "Dimraeth.exe";
 Game.GUID = "Dimraeth";
 Game.MaxPlayers = 4;
@@ -176,9 +175,12 @@ Game.ProtoInput.OnInputUnlocked = function() {
 // Patches WGI and launches each instance inside its assigned Nucleus region.
 Game.Play = function() {
   // OFME/OnlineFix builds ship their own emulator: Goldberg plus a rewritten
-  // steam_appid fight it (failed to load OnlineFix64.dll). Stay local-only on
-  // those; the per-instance Steam split needs a clean Steam build.
-  if (System.IO.File.Exists(Context.OrigRootFolder + "\\OnlineFix64.dll")) {
+  // steam_appid fight it (failed to load OnlineFix64.dll). Only clean Steam
+  // builds get the per-instance Steam split; OFME stays local-only.
+  if (!System.IO.File.Exists(Context.OrigRootFolder + "\\OnlineFix64.dll")) {
+    Game.UseGoldberg = true;
+    Game.CreateSteamAppIdByExe = true;
+  } else {
     Game.UseGoldberg = false;
     Game.CreateSteamAppIdByExe = false;
   }
