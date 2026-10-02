@@ -55,6 +55,7 @@ foreach ($expected in @(
     'PlayerCharacter = " + heroName',
     '"|AutoConnect = true"',
     'System.IO.File.Copy(waygateOrigin, waygateCfg, true);',
+    'AppendAllText("C:\\Users\\OmarPc\\AppData\\Local\\Temp\\opencode\\dimraeth-play.log",',
     'Game.UserProfileSavePath = "AppData\\LocalLow\\Mudtek";',
     'Game.SupportsMultipleKeyboardsAndMice = true;',
     'Game.ProtoInput.InjectRuntime_RemoteLoadMethod = true;',

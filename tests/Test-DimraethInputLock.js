@@ -39,6 +39,7 @@ const patchCalls = [];
 const registryWrites = [];
 const replaceCalls = [];
 const copyCalls = [];
+const appendCalls = [];
 const Context = {
   Width: 2560,
   Height: 720,
@@ -78,6 +79,7 @@ const System = {
     File: {
       Exists: (p) => (p.indexOf("OnlineFix64.dll") !== -1 ? onlineFixPresent : waygateCfgPresent),
       Copy: (...args) => copyCalls.push(args),
+      AppendAllText: (...args) => appendCalls.push(args),
     },
     Directory: {
       Exists: () => heroesDirPresent,

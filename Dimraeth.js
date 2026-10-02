@@ -209,6 +209,9 @@ Game.Play = function() {
       }
     }
     Context.ReplaceLinesInTextFile(waygateCfg, waygateLines);
+    // TEMP-DIAG(hero-split): remove once per-instance heroes are verified.
+    System.IO.File.AppendAllText("C:\\Users\\OmarPc\\AppData\\Local\\Temp\\opencode\\dimraeth-play.log",
+      "playerID=" + Context.PlayerID + " heroesFound=" + (typeof heroFiles !== "undefined" && heroFiles ? heroFiles.join("|") : "none") + " wrote=" + waygateLines.join("|") + "\r\n");
   }
   var dllPath = Context.GetFolder(Nucleus.Folder.InstancedGameFolder) + "\\UnityPlayer.dll";
   var searchPattern =
