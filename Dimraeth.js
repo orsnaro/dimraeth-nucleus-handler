@@ -4,7 +4,7 @@ Game.HandlerInterval = 100;
 Game.SymlinkExe = false;
 Game.SymlinkGame = true;
 Game.SymlinkFolders = true;
-Game.FileSymlinkCopyInstead = ["UnityPlayer.dll"];
+Game.FileSymlinkCopyInstead = ["UnityPlayer.dll", "BepInEx\\config\\com.humangenome.waygate.host.cfg"];
 // Steam P2P routes by CSteamID, not IP: two instances sharing one emulated ID
 // means only one joins / both kicked. Flags default OFF so OFME/OnlineFix
 // builds launch exactly as before; Game.Play enables the split on clean builds.
@@ -183,6 +183,30 @@ Game.Play = function() {
   } else {
     Game.UseGoldberg = false;
     Game.CreateSteamAppIdByExe = false;
+  }
+
+  // Per-instance Waygate hero (config is a per-instance copy, see
+  // FileSymlinkCopyInstead): the server seats by character name, so a shared
+  // PlayerCharacter gets the second join refused. Each instance reads its
+  // isolated saves and takes the PlayerID-th hero alphabetically, falling back
+  // to the shared value when fewer heroes exist than players.
+  var waygateCfg = Context.GetFolder(Nucleus.Folder.InstancedGameFolder) + "\\BepInEx\\config\\com.humangenome.waygate.host.cfg";
+  if (System.IO.File.Exists(waygateCfg)) {
+    var waygateLines = [];
+    waygateLines.push(Context.FindLineNumberInTextFile(waygateCfg, "AutoConnect =", Nucleus.SearchType.StartsWith) + "|AutoConnect = true");
+    var heroesRoot = Context.NucleusUserRoot + "\\AppData\\LocalLow\\Mudtek\\Dimraeth\\Characters";
+    if (System.IO.Directory.Exists(heroesRoot)) {
+      var heroFiles = System.IO.Directory.GetFiles(heroesRoot, "*.jrf").filter(function (f) {
+        return /\.jrf$/i.test(f);
+      }).sort();
+      if (heroFiles.length > 0) {
+        var heroPath = heroFiles[Math.min(Context.PlayerID, heroFiles.length - 1)];
+        var heroFile = heroPath.substring(heroPath.lastIndexOf("\\") + 1);
+        var heroName = heroFile.replace(/\.jrf$/i, "");
+        waygateLines.push(Context.FindLineNumberInTextFile(waygateCfg, "PlayerCharacter =", Nucleus.SearchType.StartsWith) + "|PlayerCharacter = " + heroName);
+      }
+    }
+    Context.ReplaceLinesInTextFile(waygateCfg, waygateLines);
   }
   var dllPath = Context.GetFolder(Nucleus.Folder.InstancedGameFolder) + "\\UnityPlayer.dll";
   var searchPattern =

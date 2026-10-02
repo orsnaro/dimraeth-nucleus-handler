@@ -37,22 +37,28 @@ const ProtoInput = {
 const Game = { Hook: {}, ProtoInput: {} };
 const patchCalls = [];
 const registryWrites = [];
+const replaceCalls = [];
 const Context = {
   Width: 2560,
   Height: 720,
   PosX: 0,
   PosY: 720,
   OrigRootFolder: "origin",
+  NucleusUserRoot: "nucleususer",
+  PlayerID: 0,
   GetFolder: (folder) => {
     assert.equal(folder, "InstancedGameFolder");
     return "instance";
   },
   PatchFileFindPattern: (...args) => patchCalls.push(args),
   EditRegKey: (...args) => registryWrites.push(args),
+  FindLineNumberInTextFile: (path, text) => (text.indexOf("AutoConnect") !== -1 ? 24 : 29),
+  ReplaceLinesInTextFile: (...args) => replaceCalls.push(args),
 };
 const Nucleus = {
   Folder: { InstancedGameFolder: "InstancedGameFolder" },
   RegType: { DWord: "DWord" },
+  SearchType: { StartsWith: "StartsWith" },
 };
 const PlayerList = {
   Count: 2,
@@ -62,7 +68,21 @@ const PlayerList = {
 
 // Flips to true to simulate an OFME/OnlineFix source build.
 let onlineFixPresent = false;
-const System = { IO: { File: { Exists: () => onlineFixPresent } } };
+// Toggles for the Waygate per-instance hero block.
+let waygateCfgPresent = false;
+let heroesDirPresent = false;
+let heroFiles = [];
+const System = {
+  IO: {
+    File: {
+      Exists: (p) => (p.indexOf("OnlineFix64.dll") !== -1 ? onlineFixPresent : waygateCfgPresent),
+    },
+    Directory: {
+      Exists: () => heroesDirPresent,
+      GetFiles: () => heroFiles,
+    },
+  },
+};
 
 vm.runInNewContext(handlerSource, { Context, Game, Nucleus, PlayerList, ProtoInput, System });
 Game.Play();
@@ -137,6 +157,52 @@ Game.Play();
 assert.equal(Game.UseGoldberg, false, "OnlineFix builds must not mix two Steam emulators");
 assert.equal(Game.CreateSteamAppIdByExe, false, "OnlineFix builds must keep their own steam_appid");
 assert.equal(Game.SteamID, "2402680", "handler must tag the real Dimraeth Steam ID");
+// OFME + Waygate client mod: each instance gets its own hero from its saves.
+onlineFixPresent = true;
+waygateCfgPresent = true;
+heroesDirPresent = true;
+heroFiles = [
+  "nucleususer\\AppData\\LocalLow\\Mudtek\\Dimraeth\\Characters\\Narolos.jrf",
+  "nucleususer\\AppData\\LocalLow\\Mudtek\\Dimraeth\\Characters\\Narolos.jrf.bak1",
+  "nucleususer\\AppData\\LocalLow\\Mudtek\\Dimraeth\\Characters\\mezo.jrf",
+];
+Context.PlayerID = 0;
+Game.Play();
+let heroWrites = replaceCalls[replaceCalls.length - 1][1];
+assert.ok(
+  heroWrites.some((line) => line === "24|AutoConnect = true"),
+  "every instance must re-arm AutoConnect (the mod consumes it once)",
+);
+assert.ok(
+  heroWrites.some((line) => line === "29|PlayerCharacter = Narolos"),
+  "player 0 must take the first hero alphabetically",
+);
+Context.PlayerID = 1;
+Game.Play();
+heroWrites = replaceCalls[replaceCalls.length - 1][1];
+assert.ok(
+  heroWrites.some((line) => line === "29|PlayerCharacter = mezo"),
+  "player 1 must take the second hero, never the shared default",
+);
+// Fewer heroes than players: keep the shared value, never invent a name.
+heroFiles = ["nucleususer\\AppData\\LocalLow\\Mudtek\\Dimraeth\\Characters\\mezo.jrf"];
+Context.PlayerID = 1;
+Game.Play();
+heroWrites = replaceCalls[replaceCalls.length - 1][1];
+assert.ok(
+  heroWrites.some((line) => line === "29|PlayerCharacter = mezo"),
+  "a lone hero must clamp to the last one available",
+);
+assert.equal(
+  heroWrites.filter((line) => line.indexOf("PlayerCharacter =") !== -1).length,
+  1,
+  "exactly one character line must be written per instance",
+);
+// No Waygate mod staged: handler must not touch anything.
+const replaceCount = replaceCalls.length;
+waygateCfgPresent = false;
+Game.Play();
+assert.equal(replaceCalls.length, replaceCount, "without the client mod no config may be rewritten");
 assert.equal(Game.ProtoInput.XinputHook, true, "ProtoInput must isolate XInput controllers");
 assert.equal(Game.ProtoInput.UseOpenXinput, true, "OpenXInput must expose x360ce slots");
 assert.equal(Game.ProtoInput.MultipleProtoControllers, undefined);
